@@ -1,1 +1,4 @@
 project_id = "oqeqffargxpooewdsmst"
+
+[functions.aura-synthesize]
+verify_jwt = false
