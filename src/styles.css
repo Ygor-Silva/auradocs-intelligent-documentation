@@ -4,28 +4,12 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/*
- * Design system definition.
- *
- * The @theme inline block maps CSS custom properties to Tailwind utility
- * classes (e.g. --color-primary -> bg-primary, text-primary).
- *
- * The :root and .dark blocks define the actual color values using oklch.
- * All colors MUST use oklch format.
- *
- * To add a new semantic color:
- * 1. Add the variable to :root (light value) and .dark (dark value)
- * 2. Register it in @theme inline as --color-<name>: var(--<name>)
- */
-
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
-  --radius-2xl: calc(var(--radius) + 8px);
-  --radius-3xl: calc(var(--radius) + 12px);
-  --radius-4xl: calc(var(--radius) + 16px);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -45,12 +29,6 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-ring-offset-background: var(--background);
-  --color-chart-1: var(--chart-1);
-  --color-chart-2: var(--chart-2);
-  --color-chart-3: var(--chart-3);
-  --color-chart-4: var(--chart-4);
-  --color-chart-5: var(--chart-5);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -59,86 +37,117 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+
+  /* AuraDocs custom tokens */
+  --color-aura-violet: var(--aura-violet);
+  --color-aura-cyan: var(--aura-cyan);
+  --color-glass: var(--glass);
+  --color-glass-border: var(--glass-border);
+  --color-deep-water: var(--deep-water);
+
+  --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+  --shadow-aura: 0 8px 32px oklch(0.65 0.18 220 / 0.15);
+  --shadow-aura-violet: 0 8px 32px oklch(0.62 0.22 295 / 0.15);
 }
 
+/* Dark mode is the default for AuraDocs */
 :root {
   --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.129 0.042 264.695);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.129 0.042 264.695);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.129 0.042 264.695);
-  --primary: oklch(0.208 0.042 265.755);
-  --primary-foreground: oklch(0.984 0.003 247.858);
-  --secondary: oklch(0.968 0.007 247.896);
-  --secondary-foreground: oklch(0.208 0.042 265.755);
-  --muted: oklch(0.968 0.007 247.896);
-  --muted-foreground: oklch(0.554 0.046 257.417);
-  --accent: oklch(0.968 0.007 247.896);
-  --accent-foreground: oklch(0.208 0.042 265.755);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(0.929 0.013 255.508);
-  --input: oklch(0.929 0.013 255.508);
-  --ring: oklch(0.704 0.04 256.788);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.984 0.003 247.858);
-  --sidebar-foreground: oklch(0.129 0.042 264.695);
-  --sidebar-primary: oklch(0.208 0.042 265.755);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.968 0.007 247.896);
-  --sidebar-accent-foreground: oklch(0.208 0.042 265.755);
-  --sidebar-border: oklch(0.929 0.013 255.508);
-  --sidebar-ring: oklch(0.704 0.04 256.788);
-}
 
-.dark {
-  --background: oklch(0.129 0.042 264.695);
-  --foreground: oklch(0.984 0.003 247.858);
-  --card: oklch(0.208 0.042 265.755);
-  --card-foreground: oklch(0.984 0.003 247.858);
-  --popover: oklch(0.208 0.042 265.755);
-  --popover-foreground: oklch(0.984 0.003 247.858);
-  --primary: oklch(0.929 0.013 255.508);
-  --primary-foreground: oklch(0.208 0.042 265.755);
-  --secondary: oklch(0.279 0.041 260.031);
-  --secondary-foreground: oklch(0.984 0.003 247.858);
-  --muted: oklch(0.279 0.041 260.031);
-  --muted-foreground: oklch(0.704 0.04 256.788);
-  --accent: oklch(0.279 0.041 260.031);
-  --accent-foreground: oklch(0.984 0.003 247.858);
-  --destructive: oklch(0.704 0.191 22.216);
-  --destructive-foreground: oklch(0.984 0.003 247.858);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.551 0.027 264.364);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.208 0.042 265.755);
-  --sidebar-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-accent: oklch(0.279 0.041 260.031);
-  --sidebar-accent-foreground: oklch(0.984 0.003 247.858);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.551 0.027 264.364);
+  /* Deep Navy #020617 */
+  --background: oklch(0.12 0.04 265);
+  --deep-water: oklch(0.10 0.04 265);
+  --foreground: oklch(0.92 0.01 250);
+
+  --card: oklch(0.16 0.04 260 / 0.4);
+  --card-foreground: oklch(0.92 0.01 250);
+  --popover: oklch(0.14 0.04 260);
+  --popover-foreground: oklch(0.92 0.01 250);
+
+  --primary: oklch(0.65 0.18 220); /* Cyan Spark */
+  --primary-foreground: oklch(0.10 0.04 265);
+  --secondary: oklch(0.20 0.03 260);
+  --secondary-foreground: oklch(0.92 0.01 250);
+  --muted: oklch(0.18 0.03 260);
+  --muted-foreground: oklch(0.62 0.02 255);
+  --accent: oklch(0.62 0.22 295); /* Soft Violet */
+  --accent-foreground: oklch(0.98 0.01 250);
+  --destructive: oklch(0.65 0.22 25);
+  --destructive-foreground: oklch(0.98 0.01 250);
+
+  --border: oklch(1 0 0 / 0.06);
+  --input: oklch(1 0 0 / 0.08);
+  --ring: oklch(0.65 0.18 220);
+
+  /* Aura tokens */
+  --aura-violet: oklch(0.62 0.22 295);
+  --aura-cyan: oklch(0.65 0.18 220);
+  --glass: oklch(0.16 0.04 260 / 0.4);
+  --glass-border: oklch(1 0 0 / 0.06);
+
+  --sidebar: oklch(0.13 0.04 263 / 0.6);
+  --sidebar-foreground: oklch(0.85 0.01 250);
+  --sidebar-primary: oklch(0.65 0.18 220);
+  --sidebar-primary-foreground: oklch(0.10 0.04 265);
+  --sidebar-accent: oklch(0.20 0.03 260);
+  --sidebar-accent-foreground: oklch(0.92 0.01 250);
+  --sidebar-border: oklch(1 0 0 / 0.06);
+  --sidebar-ring: oklch(0.65 0.18 220);
 }
 
 @layer base {
-  * {
-    border-color: var(--color-border);
+  * { border-color: var(--color-border); }
+  html, body { background-color: var(--color-background); color: var(--color-foreground); }
+  body { font-family: var(--font-sans); -webkit-font-smoothing: antialiased; }
+  ::selection { background: oklch(0.65 0.18 220 / 0.3); color: oklch(0.98 0.01 250); }
+}
+
+@layer utilities {
+  .bg-aura-gradient {
+    background-image: linear-gradient(135deg, var(--aura-violet), var(--aura-cyan));
+  }
+  .text-aura-gradient {
+    background-image: linear-gradient(135deg, var(--aura-violet), var(--aura-cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .glass-panel {
+    background: var(--glass);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
+  }
+  .aura-glow {
+    box-shadow: 0 0 24px oklch(0.65 0.18 220 / 0.4);
+  }
+  .aura-glow-violet {
+    box-shadow: 0 0 24px oklch(0.62 0.22 295 / 0.4);
   }
 
-  body {
-    background-color: var(--color-background);
-    color: var(--color-foreground);
-  }
+  /* Prose styles for synthesized markdown */
+  .prose-aura { color: oklch(0.85 0.01 250); font-size: 14px; line-height: 1.7; }
+  .prose-aura > *:first-child { margin-top: 0; }
+  .prose-aura h1 { font-size: 1.875rem; font-weight: 600; letter-spacing: -0.02em; color: oklch(0.98 0.01 250); margin: 0 0 0.75rem; line-height: 1.2; }
+  .prose-aura h2 { font-size: 1.25rem; font-weight: 500; color: oklch(0.95 0.01 250); margin: 2rem 0 0.75rem; letter-spacing: -0.01em; }
+  .prose-aura h3 { font-size: 1rem; font-weight: 500; color: oklch(0.92 0.01 250); margin: 1.5rem 0 0.5rem; }
+  .prose-aura p { margin: 0.75rem 0; color: oklch(0.78 0.01 250); }
+  .prose-aura ul, .prose-aura ol { margin: 0.75rem 0; padding-left: 1.5rem; }
+  .prose-aura li { margin: 0.35rem 0; color: oklch(0.78 0.01 250); }
+  .prose-aura strong { color: oklch(0.98 0.01 250); font-weight: 600; }
+  .prose-aura a { color: var(--aura-cyan); text-decoration: underline; text-underline-offset: 2px; }
+  .prose-aura code { font-family: var(--font-mono); font-size: 0.85em; background: oklch(0.65 0.18 220 / 0.1); color: var(--aura-cyan); padding: 0.1em 0.35em; border-radius: 0.25rem; }
+  .prose-aura pre { background: oklch(0.08 0.03 265); border: 1px solid var(--glass-border); border-radius: 0.5rem; padding: 1rem; overflow-x: auto; margin: 1rem 0; font-family: var(--font-mono); font-size: 12.5px; line-height: 1.6; }
+  .prose-aura pre code { background: transparent; padding: 0; color: oklch(0.85 0.01 250); font-size: inherit; }
+  .prose-aura blockquote { border-left: 2px solid var(--aura-violet); padding: 0.25rem 0 0.25rem 1rem; margin: 1rem 0; color: oklch(0.7 0.02 255); font-style: italic; }
+  .prose-aura table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 13px; }
+  .prose-aura th { text-align: left; padding: 0.5rem 0.75rem; border-bottom: 1px solid var(--glass-border); color: oklch(0.62 0.02 255); font-weight: 500; font-family: var(--font-mono); font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; background: oklch(1 0 0 / 0.02); }
+  .prose-aura td { padding: 0.5rem 0.75rem; border-bottom: 1px solid oklch(1 0 0 / 0.03); color: oklch(0.78 0.01 250); }
+  .prose-aura hr { border: none; border-top: 1px solid var(--glass-border); margin: 2rem 0; }
+  .scrollbar-thin::-webkit-scrollbar { width: 6px; height: 6px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb { background: oklch(1 0 0 / 0.08); border-radius: 3px; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background: oklch(1 0 0 / 0.15); }
 }
