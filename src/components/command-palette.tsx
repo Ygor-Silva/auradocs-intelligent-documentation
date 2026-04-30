@@ -36,10 +36,7 @@ export function CommandPalette({ open, onOpenChange, onSelectAction }: CommandPa
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="max-w-xl gap-0 border-glass-border bg-popover/90 p-0 backdrop-blur-2xl"
-        showCloseButton={false}
-      >
+      <DialogContent className="max-w-xl gap-0 border-glass-border bg-popover/90 p-0 backdrop-blur-2xl [&>button]:hidden">
         <div className="flex items-center gap-3 border-b border-glass-border px-4 py-3">
           <Sparkles className="size-4 text-primary" />
           <input
