@@ -130,7 +130,15 @@ function WorkspacePage() {
     selectDoc(row);
   }
 
-  async function persist(patch: Partial<DocRow>) {
+  type DocPatch = {
+    title?: string;
+    raw_input?: string;
+    content?: string;
+    folder_name?: string;
+    tags?: string[];
+    is_favorite?: boolean;
+  };
+  async function persist(patch: DocPatch) {
     if (!activeId) return;
     const { error } = await supabase.from("documents").update(patch).eq("id", activeId);
     if (error) { toast.error("Erro ao salvar"); return; }
