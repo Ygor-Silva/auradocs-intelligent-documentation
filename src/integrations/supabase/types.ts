@@ -93,44 +93,105 @@ export type Database = {
           },
         ]
       }
+      doc_versions: {
+        Row: {
+          author_id: string | null
+          author_kind: string
+          change_summary: string | null
+          content: string
+          created_at: string
+          document_id: string
+          id: string
+          title: string | null
+        }
+        Insert: {
+          author_id?: string | null
+          author_kind?: string
+          change_summary?: string | null
+          content?: string
+          created_at?: string
+          document_id: string
+          id?: string
+          title?: string | null
+        }
+        Update: {
+          author_id?: string | null
+          author_kind?: string
+          change_summary?: string | null
+          content?: string
+          created_at?: string
+          document_id?: string
+          id?: string
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "doc_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       documents: {
         Row: {
           content: string | null
           created_at: string
+          folder_name: string
           id: string
+          is_favorite: boolean
           metadata: Json
           owner_id: string
           raw_input: string | null
           source_type: Database["public"]["Enums"]["doc_source_type"]
           status: Database["public"]["Enums"]["doc_status"]
+          tags: string[]
           title: string
           updated_at: string
+          workspace_id: string | null
         }
         Insert: {
           content?: string | null
           created_at?: string
+          folder_name?: string
           id?: string
+          is_favorite?: boolean
           metadata?: Json
           owner_id: string
           raw_input?: string | null
           source_type?: Database["public"]["Enums"]["doc_source_type"]
           status?: Database["public"]["Enums"]["doc_status"]
+          tags?: string[]
           title?: string
           updated_at?: string
+          workspace_id?: string | null
         }
         Update: {
           content?: string | null
           created_at?: string
+          folder_name?: string
           id?: string
+          is_favorite?: boolean
           metadata?: Json
           owner_id?: string
           raw_input?: string | null
           source_type?: Database["public"]["Enums"]["doc_source_type"]
           status?: Database["public"]["Enums"]["doc_status"]
+          tags?: string[]
           title?: string
           updated_at?: string
+          workspace_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "documents_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
@@ -156,6 +217,41 @@ export type Database = {
         }
         Relationships: []
       }
+      public_shares: {
+        Row: {
+          created_at: string
+          created_by: string
+          document_id: string
+          expires_at: string | null
+          id: string
+          share_token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by: string
+          document_id: string
+          expires_at?: string | null
+          id?: string
+          share_token?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string
+          document_id?: string
+          expires_at?: string | null
+          id?: string
+          share_token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "public_shares_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -177,17 +273,100 @@ export type Database = {
         }
         Relationships: []
       }
+      workspace_members: {
+        Row: {
+          accepted_at: string | null
+          id: string
+          invited_at: string
+          invited_email: string | null
+          role: string
+          user_id: string | null
+          workspace_id: string
+        }
+        Insert: {
+          accepted_at?: string | null
+          id?: string
+          invited_at?: string
+          invited_email?: string | null
+          role?: string
+          user_id?: string | null
+          workspace_id: string
+        }
+        Update: {
+          accepted_at?: string | null
+          id?: string
+          invited_at?: string
+          invited_email?: string | null
+          role?: string
+          user_id?: string | null
+          workspace_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_members_workspace_id_fkey"
+            columns: ["workspace_id"]
+            isOneToOne: false
+            referencedRelation: "workspaces"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspaces: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          owner_id: string
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id: string
+          slug?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          owner_id?: string
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      get_shared_document: {
+        Args: { _token: string }
+        Returns: {
+          content: string
+          id: string
+          title: string
+          updated_at: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      is_workspace_member: {
+        Args: { _user_id: string; _workspace_id: string }
+        Returns: boolean
+      }
+      user_default_workspace: { Args: { _user_id: string }; Returns: string }
+      workspace_role: {
+        Args: { _user_id: string; _workspace_id: string }
+        Returns: string
       }
     }
     Enums: {
