@@ -15,11 +15,12 @@ import { ShareDialog } from "@/components/share-dialog";
 import { MembersDialog } from "@/components/members-dialog";
 import { VersionDiffDialog } from "@/components/version-diff-dialog";
 import { PresenceAvatars } from "@/components/presence-avatars";
+import { GlobalSearch } from "@/components/global-search";
 import { exportToPDF, exportToXLSX } from "@/lib/export-doc";
 import { toast } from "sonner";
 import {
   Plus, Sparkles, Loader2, LogOut, Save, Trash2, Wand2,
-  Star, Users, Share2, History, Download, FileText, FolderInput,
+  Star, Users, Share2, History, Download, FileText, FolderInput, Search, Check,
 } from "lucide-react";
 
 export const Route = createFileRoute("/workspace")({
@@ -56,6 +57,11 @@ function WorkspacePage() {
   const [diffOpen, setDiffOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [extraFolders, setExtraFolders] = useState<string[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const dirtyRef = useRef(false);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const docViewRef = useRef<HTMLDivElement | null>(null);
 
@@ -102,6 +108,9 @@ function WorkspacePage() {
   useEffect(() => { void loadDocs(); }, [loadDocs]);
 
   function selectDoc(doc: DocRow) {
+    // Avoid clobbering the next doc with auto-save from the previous one.
+    dirtyRef.current = false;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     setActiveId(doc.id);
     setTitle(doc.title);
     setRawInput(doc.raw_input ?? "");
@@ -109,7 +118,44 @@ function WorkspacePage() {
     setTags(doc.tags ?? []);
     setFolder(doc.folder_name ?? "Geral");
     setIsFavorite(doc.is_favorite ?? false);
+    setSavedAt(null);
   }
+
+  // Global keyboard shortcuts: Cmd/Ctrl+K opens search, Cmd/Ctrl+Enter syntheses.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key.toLowerCase() === "k") { e.preventDefault(); setSearchOpen(true); }
+      else if (mod && e.key === "Enter") { e.preventDefault(); void synthesize(); }
+      else if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); void saveDoc(); }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId, rawInput, content, title, folder, tags, isFavorite, streaming]);
+
+  // Auto-save: 1.5s after the last edit, persist title/content/raw_input.
+  useEffect(() => {
+    if (!activeId) return;
+    if (!dirtyRef.current) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      const { error } = await supabase
+        .from("documents")
+        .update({ title, raw_input: rawInput, content, folder_name: folder, tags, is_favorite: isFavorite })
+        .eq("id", activeId);
+      if (!error) {
+        dirtyRef.current = false;
+        setSavedAt(Date.now());
+        setDocs((d) => d.map((x) => (x.id === activeId ? { ...x, title, raw_input: rawInput, content, folder_name: folder, tags, is_favorite: isFavorite, updated_at: new Date().toISOString() } : x)));
+      }
+    }, 1500);
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
+  }, [title, rawInput, content, folder, tags, isFavorite, activeId]);
+
+  // Mark dirty whenever any editable field changes.
+  useEffect(() => { dirtyRef.current = true; /* set after first selectDoc resets it */ },
+    [title, rawInput, content, folder, tags, isFavorite]);
 
   async function createDoc() {
     if (!user || !workspaceId) return;
@@ -340,6 +386,26 @@ function WorkspacePage() {
     catch (e) { console.error(e); toast.error("Erro ao gerar XLSX"); }
   }
 
+  async function handleFileDrop(files: FileList) {
+    const allowed = /\.(sql|json|log|md|txt|yml|yaml|csv|ts|tsx|js|jsx|py|sh|env)$/i;
+    const chunks: string[] = [];
+    let attached = 0;
+    for (const f of Array.from(files)) {
+      if (f.size > 1_000_000) { toast.error(`${f.name}: arquivo > 1 MB ignorado`); continue; }
+      if (!allowed.test(f.name) && !f.type.startsWith("text/")) {
+        toast.error(`${f.name}: tipo não suportado`); continue;
+      }
+      const text = await f.text();
+      const ext = (f.name.split(".").pop() || "").toLowerCase();
+      chunks.push(`\n\n--- ${f.name} ---\n\`\`\`${ext}\n${text}\n\`\`\`\n`);
+      attached++;
+    }
+    if (attached > 0) {
+      setRawInput((prev) => (prev + chunks.join("")).trimStart());
+      toast.success(`${attached} arquivo${attached > 1 ? "s" : ""} anexado${attached > 1 ? "s" : ""}`);
+    }
+  }
+
   async function signOut() {
     await supabase.auth.signOut();
     navigate({ to: "/" });
@@ -459,6 +525,7 @@ function WorkspacePage() {
                     <option value="__new__" className="bg-popover">+ Nova pasta…</option>
                   </select>
                 </div>
+                <SaveStatus dirty={dirtyRef.current} savedAt={savedAt} saving={saving} />
               </>
             ) : (
               <span className="text-sm text-muted-foreground">Selecione ou crie um documento</span>
@@ -467,6 +534,19 @@ function WorkspacePage() {
 
           <div className="flex items-center gap-2">
             <PresenceAvatars peers={peers} meId={user.id} />
+
+            <button
+              onClick={() => setSearchOpen(true)}
+              title="Buscar (⌘K)"
+              className="flex items-center gap-2 rounded-md border border-glass-border bg-background/40 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
+            >
+              <Search className="size-3.5" />
+              <span>Buscar</span>
+              <span className="flex items-center gap-1">
+                <kbd className="rounded border border-glass-border bg-background/60 px-1.5 py-0.5 font-mono text-[10px]">⌘</kbd>
+                <kbd className="rounded border border-glass-border bg-background/60 px-1.5 py-0.5 font-mono text-[10px]">K</kbd>
+              </span>
+            </button>
 
             <button
               onClick={() => setPaletteOpen(true)}
@@ -568,14 +648,31 @@ function WorkspacePage() {
                   {rawInput.length.toLocaleString()} chars
                 </span>
               </div>
-              <textarea
-                value={rawInput}
-                onChange={(e) => setRawInput(e.target.value)}
-                placeholder={'Cole logs, JSON, código, schema SQL ou descreva uma lógica...'}
-                disabled={!canEdit}
-                className="scrollbar-thin flex-1 resize-none bg-transparent p-6 font-mono text-[12.5px] leading-relaxed text-foreground/80 outline-none placeholder:text-muted-foreground/50 disabled:opacity-60"
-                spellCheck={false}
-              />
+              <div
+                onDragOver={(e) => { if (canEdit) { e.preventDefault(); setDragOver(true); } }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  if (!canEdit) return;
+                  await handleFileDrop(e.dataTransfer.files);
+                }}
+                className={`relative flex flex-1 flex-col ${dragOver ? "ring-2 ring-inset ring-primary/40" : ""}`}
+              >
+                <textarea
+                  value={rawInput}
+                  onChange={(e) => setRawInput(e.target.value)}
+                  placeholder={'Cole logs, JSON, código, schema SQL — ou arraste arquivos (.sql .json .log .md .txt) aqui.'}
+                  disabled={!canEdit}
+                  className="scrollbar-thin flex-1 resize-none bg-transparent p-6 font-mono text-[12.5px] leading-relaxed text-foreground/80 outline-none placeholder:text-muted-foreground/50 disabled:opacity-60"
+                  spellCheck={false}
+                />
+                {dragOver && (
+                  <div className="pointer-events-none absolute inset-4 flex items-center justify-center rounded-lg border-2 border-dashed border-primary/60 bg-primary/5">
+                    <span className="font-mono text-xs uppercase tracking-widest text-primary">Solte para anexar</span>
+                  </div>
+                )}
+              </div>
               <div className="border-t border-glass-border bg-black/20 p-3">
                 <Button
                   onClick={() => synthesize()}
@@ -646,6 +743,33 @@ function WorkspacePage() {
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} documentId={activeId} userId={user.id} />
       <MembersDialog open={membersOpen} onOpenChange={setMembersOpen} workspaceId={workspaceId} isAdmin={isAdmin} />
       <VersionDiffDialog open={diffOpen} onOpenChange={setDiffOpen} documentId={activeId} currentContent={content} />
+      <GlobalSearch
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        docs={docs.map((d) => ({
+          id: d.id, title: d.title, content: d.content, raw_input: d.raw_input,
+          folder_name: d.folder_name, tags: d.tags, is_favorite: d.is_favorite,
+        }))}
+        onSelect={(id) => { const d = docs.find((x) => x.id === id); if (d) selectDoc(d); }}
+      />
     </div>
   );
 }
+
+function SaveStatus({ dirty, savedAt, saving }: { dirty: boolean; savedAt: number | null; saving: boolean }) {
+  const [tick, setTick] = useState(0);
+  useEffect(() => { const t = setInterval(() => setTick((n) => n + 1), 5000); return () => clearInterval(t); }, []);
+  // tick is intentionally read so the relative timestamp re-renders.
+  void tick;
+  if (saving) return <span className="ml-2 flex items-center gap-1 text-[10px] uppercase tracking-widest text-muted-foreground"><Loader2 className="size-3 animate-spin" />Salvando</span>;
+  if (dirty) return <span className="ml-2 text-[10px] uppercase tracking-widest text-muted-foreground">• não salvo</span>;
+  if (!savedAt) return null;
+  const secs = Math.max(1, Math.round((Date.now() - savedAt) / 1000));
+  const label = secs < 60 ? `há ${secs}s` : `há ${Math.round(secs / 60)} min`;
+  return (
+    <span className="ml-2 flex items-center gap-1 text-[10px] uppercase tracking-widest text-emerald-400/80">
+      <Check className="size-3" />Salvo {label}
+    </span>
+  );
+}
+
