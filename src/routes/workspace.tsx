@@ -108,6 +108,9 @@ function WorkspacePage() {
   useEffect(() => { void loadDocs(); }, [loadDocs]);
 
   function selectDoc(doc: DocRow) {
+    // Avoid clobbering the next doc with auto-save from the previous one.
+    dirtyRef.current = false;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     setActiveId(doc.id);
     setTitle(doc.title);
     setRawInput(doc.raw_input ?? "");
@@ -115,7 +118,44 @@ function WorkspacePage() {
     setTags(doc.tags ?? []);
     setFolder(doc.folder_name ?? "Geral");
     setIsFavorite(doc.is_favorite ?? false);
+    setSavedAt(null);
   }
+
+  // Global keyboard shortcuts: Cmd/Ctrl+K opens search, Cmd/Ctrl+Enter syntheses.
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      const mod = e.metaKey || e.ctrlKey;
+      if (mod && e.key.toLowerCase() === "k") { e.preventDefault(); setSearchOpen(true); }
+      else if (mod && e.key === "Enter") { e.preventDefault(); void synthesize(); }
+      else if (mod && e.key.toLowerCase() === "s") { e.preventDefault(); void saveDoc(); }
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeId, rawInput, content, title, folder, tags, isFavorite, streaming]);
+
+  // Auto-save: 1.5s after the last edit, persist title/content/raw_input.
+  useEffect(() => {
+    if (!activeId) return;
+    if (!dirtyRef.current) return;
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(async () => {
+      const { error } = await supabase
+        .from("documents")
+        .update({ title, raw_input: rawInput, content, folder_name: folder, tags, is_favorite: isFavorite })
+        .eq("id", activeId);
+      if (!error) {
+        dirtyRef.current = false;
+        setSavedAt(Date.now());
+        setDocs((d) => d.map((x) => (x.id === activeId ? { ...x, title, raw_input: rawInput, content, folder_name: folder, tags, is_favorite: isFavorite, updated_at: new Date().toISOString() } : x)));
+      }
+    }, 1500);
+    return () => { if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current); };
+  }, [title, rawInput, content, folder, tags, isFavorite, activeId]);
+
+  // Mark dirty whenever any editable field changes.
+  useEffect(() => { dirtyRef.current = true; /* set after first selectDoc resets it */ },
+    [title, rawInput, content, folder, tags, isFavorite]);
 
   async function createDoc() {
     if (!user || !workspaceId) return;
