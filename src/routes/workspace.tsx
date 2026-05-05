@@ -386,7 +386,26 @@ function WorkspacePage() {
     catch (e) { console.error(e); toast.error("Erro ao gerar XLSX"); }
   }
 
-  async function signOut() {
+  async function handleFileDrop(files: FileList) {
+    const allowed = /\.(sql|json|log|md|txt|yml|yaml|csv|ts|tsx|js|jsx|py|sh|env)$/i;
+    const chunks: string[] = [];
+    let attached = 0;
+    for (const f of Array.from(files)) {
+      if (f.size > 1_000_000) { toast.error(`${f.name}: arquivo > 1 MB ignorado`); continue; }
+      if (!allowed.test(f.name) && !f.type.startsWith("text/")) {
+        toast.error(`${f.name}: tipo não suportado`); continue;
+      }
+      const text = await f.text();
+      const ext = (f.name.split(".").pop() || "").toLowerCase();
+      chunks.push(`\n\n--- ${f.name} ---\n\`\`\`${ext}\n${text}\n\`\`\`\n`);
+      attached++;
+    }
+    if (attached > 0) {
+      setRawInput((prev) => (prev + chunks.join("")).trimStart());
+      toast.success(`${attached} arquivo${attached > 1 ? "s" : ""} anexado${attached > 1 ? "s" : ""}`);
+    }
+  }
+
     await supabase.auth.signOut();
     navigate({ to: "/" });
   }
