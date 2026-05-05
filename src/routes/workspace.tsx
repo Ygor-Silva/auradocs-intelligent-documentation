@@ -55,6 +55,7 @@ function WorkspacePage() {
   const [membersOpen, setMembersOpen] = useState(false);
   const [diffOpen, setDiffOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [extraFolders, setExtraFolders] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const docViewRef = useRef<HTMLDivElement | null>(null);
 
@@ -161,6 +162,27 @@ function WorkspacePage() {
     setDocs((ds) => ds.map((x) => (x.id === docId ? { ...x, folder_name: folderName } : x)));
     if (activeId === docId) setFolder(folderName);
     toast.success(`Movido para ${folderName}`);
+  }
+
+  // Folders: persist user-created (possibly empty) folder names per workspace.
+  useEffect(() => {
+    if (!workspaceId) return;
+    try {
+      const raw = localStorage.getItem(`auradocs:folders:${workspaceId}`);
+      setExtraFolders(raw ? JSON.parse(raw) : []);
+    } catch { setExtraFolders([]); }
+  }, [workspaceId]);
+
+  function createFolder(name: string) {
+    const clean = name.trim();
+    if (!clean || !workspaceId) return;
+    setExtraFolders((prev) => {
+      if (prev.includes(clean)) return prev;
+      const next = [...prev, clean];
+      try { localStorage.setItem(`auradocs:folders:${workspaceId}`, JSON.stringify(next)); } catch { /* noop */ }
+      return next;
+    });
+    toast.success(`Pasta "${clean}" criada`);
   }
 
   async function toggleFavorite() {
@@ -307,7 +329,7 @@ function WorkspacePage() {
   async function handleExportPDF() {
     if (!docViewRef.current || !content) return;
     setExporting(true);
-    try { await exportToPDF(docViewRef.current, title || "auradocs"); }
+    try { await exportToPDF(docViewRef.current, title || "auradocs", content, title || "AuraDocs"); }
     catch (e) { console.error(e); toast.error("Erro ao gerar PDF"); }
     finally { setExporting(false); }
   }
@@ -375,6 +397,8 @@ function WorkspacePage() {
           onSelect={(id) => { const d = docs.find((x) => x.id === id); if (d) selectDoc(d); }}
           onCreate={createDoc}
           onMove={moveToFolder}
+          onCreateFolder={createFolder}
+          extraFolders={extraFolders}
         />
 
         <div className="border-t border-glass-border p-4">
@@ -411,12 +435,29 @@ function WorkspacePage() {
                 />
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <FolderInput className="size-3" />
-                  <input
+                  <select
                     value={folder}
-                    onChange={(e) => setFolder(e.target.value)}
-                    onBlur={() => persist({ folder_name: folder || "Geral" })}
-                    className="w-24 bg-transparent outline-none focus:text-foreground"
-                  />
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "__new__") {
+                        const name = window.prompt("Nome da nova pasta:")?.trim();
+                        if (name) {
+                          createFolder(name);
+                          setFolder(name);
+                          void persist({ folder_name: name });
+                        }
+                        return;
+                      }
+                      setFolder(val);
+                      void persist({ folder_name: val });
+                    }}
+                    className="cursor-pointer rounded border border-transparent bg-transparent px-1 py-0.5 outline-none transition hover:border-glass-border focus:border-glass-border focus:text-foreground"
+                  >
+                    {Array.from(new Set(["Geral", folder, ...extraFolders, ...docs.map((d) => d.folder_name)].filter(Boolean))).sort().map((f) => (
+                      <option key={f} value={f} className="bg-popover">{f}</option>
+                    ))}
+                    <option value="__new__" className="bg-popover">+ Nova pasta…</option>
+                  </select>
                 </div>
               </>
             ) : (
@@ -438,6 +479,39 @@ function WorkspacePage() {
                 <kbd className="rounded border border-glass-border bg-background/60 px-1.5 py-0.5 font-mono text-[10px]">A</kbd>
               </span>
             </button>
+
+            {/* User profile chip */}
+            <div className="group relative">
+              <button
+                title={user.email ?? "Conta"}
+                className="flex items-center gap-2 rounded-full border border-glass-border bg-background/40 py-1 pl-1 pr-3 transition hover:border-primary/40"
+              >
+                <span className="flex size-6 items-center justify-center rounded-full bg-aura-gradient text-[11px] font-semibold text-primary-foreground">
+                  {(user.email ?? "?")[0].toUpperCase()}
+                </span>
+                <span className="max-w-[140px] truncate text-xs text-muted-foreground group-hover:text-foreground">
+                  {user.user_metadata?.display_name ?? user.email?.split("@")[0]}
+                </span>
+              </button>
+              <div className="invisible absolute right-0 top-full z-50 mt-2 w-56 origin-top-right rounded-lg border border-glass-border bg-popover p-2 opacity-0 shadow-aura backdrop-blur-xl transition group-hover:visible group-hover:opacity-100">
+                <div className="border-b border-glass-border px-2 py-2">
+                  <div className="truncate text-xs font-medium text-foreground">{user.email}</div>
+                  {myRole && <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{myRole}</div>}
+                </div>
+                <button
+                  onClick={() => setMembersOpen(true)}
+                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-muted-foreground transition hover:bg-white/5 hover:text-foreground"
+                >
+                  <Users className="size-3.5" /> Membros do workspace
+                </button>
+                <button
+                  onClick={signOut}
+                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-muted-foreground transition hover:bg-white/5 hover:text-destructive"
+                >
+                  <LogOut className="size-3.5" /> Sair
+                </button>
+              </div>
+            </div>
 
             {activeId && (
               <>

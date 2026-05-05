@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronRight, FileText, Folder, FolderOpen, Plus, Star, Tag } from "lucide-react";
+import { ChevronRight, FileText, Folder, FolderOpen, FolderPlus, Plus, Star, Tag } from "lucide-react";
 
 export interface SidebarDoc {
   id: string;
@@ -16,11 +16,13 @@ interface Props {
   onSelect: (id: string) => void;
   onCreate: () => void;
   onMove: (docId: string, folder: string) => void;
+  onCreateFolder?: (folder: string) => void;
+  extraFolders?: string[];
 }
 
 const ALL_TAG = "__all__";
 
-export function WorkspaceSidebar({ docs, activeId, onSelect, onCreate, onMove }: Props) {
+export function WorkspaceSidebar({ docs, activeId, onSelect, onCreate, onMove, onCreateFolder, extraFolders = [] }: Props) {
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const [showFavorites, setShowFavorites] = useState(false);
   const [activeTag, setActiveTag] = useState<string>(ALL_TAG);
@@ -46,8 +48,10 @@ export function WorkspaceSidebar({ docs, activeId, onSelect, onCreate, onMove }:
       if (!map.has(k)) map.set(k, []);
       map.get(k)!.push(d);
     }
+    // Ensure user-created (still empty) folders show up in the tree.
+    for (const f of extraFolders) if (!map.has(f)) map.set(f, []);
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [filtered]);
+  }, [filtered, extraFolders]);
 
   return (
     <nav className="scrollbar-thin flex-1 overflow-y-auto p-3">
@@ -64,10 +68,22 @@ export function WorkspaceSidebar({ docs, activeId, onSelect, onCreate, onMove }:
           <Star className={`size-3 ${showFavorites ? "fill-primary" : ""}`} />
           Favoritos
         </button>
+        {onCreateFolder && (
+          <button
+            onClick={() => {
+              const name = window.prompt("Nome da nova pasta:")?.trim();
+              if (name) onCreateFolder(name);
+            }}
+            title="Nova pasta"
+            className="ml-auto flex size-6 items-center justify-center rounded-md border border-glass-border bg-background/40 text-muted-foreground transition hover:border-primary/40 hover:text-primary"
+          >
+            <FolderPlus className="size-3" />
+          </button>
+        )}
         <button
           onClick={onCreate}
           title="Novo documento"
-          className="ml-auto flex size-6 items-center justify-center rounded-md border border-glass-border bg-background/40 text-muted-foreground transition hover:border-primary/40 hover:text-primary"
+          className={`${onCreateFolder ? "" : "ml-auto"} flex size-6 items-center justify-center rounded-md border border-glass-border bg-background/40 text-muted-foreground transition hover:border-primary/40 hover:text-primary`}
         >
           <Plus className="size-3" />
         </button>
