@@ -55,6 +55,7 @@ function WorkspacePage() {
   const [membersOpen, setMembersOpen] = useState(false);
   const [diffOpen, setDiffOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [extraFolders, setExtraFolders] = useState<string[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const docViewRef = useRef<HTMLDivElement | null>(null);
 
