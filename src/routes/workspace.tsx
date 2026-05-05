@@ -730,6 +730,33 @@ function WorkspacePage() {
       <ShareDialog open={shareOpen} onOpenChange={setShareOpen} documentId={activeId} userId={user.id} />
       <MembersDialog open={membersOpen} onOpenChange={setMembersOpen} workspaceId={workspaceId} isAdmin={isAdmin} />
       <VersionDiffDialog open={diffOpen} onOpenChange={setDiffOpen} documentId={activeId} currentContent={content} />
+      <GlobalSearch
+        open={searchOpen}
+        onOpenChange={setSearchOpen}
+        docs={docs.map((d) => ({
+          id: d.id, title: d.title, content: d.content, raw_input: d.raw_input,
+          folder_name: d.folder_name, tags: d.tags, is_favorite: d.is_favorite,
+        }))}
+        onSelect={(id) => { const d = docs.find((x) => x.id === id); if (d) selectDoc(d); }}
+      />
     </div>
   );
 }
+
+function SaveStatus({ dirty, savedAt, saving }: { dirty: boolean; savedAt: number | null; saving: boolean }) {
+  const [tick, setTick] = useState(0);
+  useEffect(() => { const t = setInterval(() => setTick((n) => n + 1), 5000); return () => clearInterval(t); }, []);
+  // tick is intentionally read so the relative timestamp re-renders.
+  void tick;
+  if (saving) return <span className="ml-2 flex items-center gap-1 text-[10px] uppercase tracking-widest text-muted-foreground"><Loader2 className="size-3 animate-spin" />Salvando</span>;
+  if (dirty) return <span className="ml-2 text-[10px] uppercase tracking-widest text-muted-foreground">• não salvo</span>;
+  if (!savedAt) return null;
+  const secs = Math.max(1, Math.round((Date.now() - savedAt) / 1000));
+  const label = secs < 60 ? `há ${secs}s` : `há ${Math.round(secs / 60)} min`;
+  return (
+    <span className="ml-2 flex items-center gap-1 text-[10px] uppercase tracking-widest text-emerald-400/80">
+      <Check className="size-3" />Salvo {label}
+    </span>
+  );
+}
+
