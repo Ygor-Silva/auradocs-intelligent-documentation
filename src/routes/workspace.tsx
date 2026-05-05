@@ -164,7 +164,27 @@ function WorkspacePage() {
     toast.success(`Movido para ${folderName}`);
   }
 
-  async function toggleFavorite() {
+  // Folders: persist user-created (possibly empty) folder names per workspace.
+  useEffect(() => {
+    if (!workspaceId) return;
+    try {
+      const raw = localStorage.getItem(`auradocs:folders:${workspaceId}`);
+      setExtraFolders(raw ? JSON.parse(raw) : []);
+    } catch { setExtraFolders([]); }
+  }, [workspaceId]);
+
+  function createFolder(name: string) {
+    const clean = name.trim();
+    if (!clean || !workspaceId) return;
+    setExtraFolders((prev) => {
+      if (prev.includes(clean)) return prev;
+      const next = [...prev, clean];
+      try { localStorage.setItem(`auradocs:folders:${workspaceId}`, JSON.stringify(next)); } catch { /* noop */ }
+      return next;
+    });
+    toast.success(`Pasta "${clean}" criada`);
+  }
+
     const next = !isFavorite;
     setIsFavorite(next);
     await persist({ is_favorite: next });
