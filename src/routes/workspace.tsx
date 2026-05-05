@@ -406,6 +406,7 @@ function WorkspacePage() {
     }
   }
 
+  async function signOut() {
     await supabase.auth.signOut();
     navigate({ to: "/" });
   }
