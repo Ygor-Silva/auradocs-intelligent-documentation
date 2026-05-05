@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { ChevronRight, FileText, Folder, FolderOpen, Plus, Star, Tag } from "lucide-react";
+import { ChevronRight, FileText, Folder, FolderOpen, FolderPlus, Plus, Star, Tag } from "lucide-react";
 
 export interface SidebarDoc {
   id: string;
