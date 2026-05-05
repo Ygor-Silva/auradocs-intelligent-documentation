@@ -68,10 +68,22 @@ export function WorkspaceSidebar({ docs, activeId, onSelect, onCreate, onMove, o
           <Star className={`size-3 ${showFavorites ? "fill-primary" : ""}`} />
           Favoritos
         </button>
+        {onCreateFolder && (
+          <button
+            onClick={() => {
+              const name = window.prompt("Nome da nova pasta:")?.trim();
+              if (name) onCreateFolder(name);
+            }}
+            title="Nova pasta"
+            className="ml-auto flex size-6 items-center justify-center rounded-md border border-glass-border bg-background/40 text-muted-foreground transition hover:border-primary/40 hover:text-primary"
+          >
+            <FolderPlus className="size-3" />
+          </button>
+        )}
         <button
           onClick={onCreate}
           title="Novo documento"
-          className="ml-auto flex size-6 items-center justify-center rounded-md border border-glass-border bg-background/40 text-muted-foreground transition hover:border-primary/40 hover:text-primary"
+          className={`${onCreateFolder ? "" : "ml-auto"} flex size-6 items-center justify-center rounded-md border border-glass-border bg-background/40 text-muted-foreground transition hover:border-primary/40 hover:text-primary`}
         >
           <Plus className="size-3" />
         </button>
