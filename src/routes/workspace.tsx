@@ -307,7 +307,7 @@ function WorkspacePage() {
   async function handleExportPDF() {
     if (!docViewRef.current || !content) return;
     setExporting(true);
-    try { await exportToPDF(docViewRef.current, title || "auradocs"); }
+    try { await exportToPDF(docViewRef.current, title || "auradocs", content, title || "AuraDocs"); }
     catch (e) { console.error(e); toast.error("Erro ao gerar PDF"); }
     finally { setExporting(false); }
   }
