@@ -185,6 +185,7 @@ function WorkspacePage() {
     toast.success(`Pasta "${clean}" criada`);
   }
 
+  async function toggleFavorite() {
     const next = !isFavorite;
     setIsFavorite(next);
     await persist({ is_favorite: next });
