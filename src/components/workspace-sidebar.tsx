@@ -48,8 +48,10 @@ export function WorkspaceSidebar({ docs, activeId, onSelect, onCreate, onMove, o
       if (!map.has(k)) map.set(k, []);
       map.get(k)!.push(d);
     }
+    // Ensure user-created (still empty) folders show up in the tree.
+    for (const f of extraFolders) if (!map.has(f)) map.set(f, []);
     return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b));
-  }, [filtered]);
+  }, [filtered, extraFolders]);
 
   return (
     <nav className="scrollbar-thin flex-1 overflow-y-auto p-3">
