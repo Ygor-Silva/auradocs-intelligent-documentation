@@ -15,11 +15,12 @@ import { ShareDialog } from "@/components/share-dialog";
 import { MembersDialog } from "@/components/members-dialog";
 import { VersionDiffDialog } from "@/components/version-diff-dialog";
 import { PresenceAvatars } from "@/components/presence-avatars";
+import { GlobalSearch } from "@/components/global-search";
 import { exportToPDF, exportToXLSX } from "@/lib/export-doc";
 import { toast } from "sonner";
 import {
   Plus, Sparkles, Loader2, LogOut, Save, Trash2, Wand2,
-  Star, Users, Share2, History, Download, FileText, FolderInput,
+  Star, Users, Share2, History, Download, FileText, FolderInput, Search, Check,
 } from "lucide-react";
 
 export const Route = createFileRoute("/workspace")({
