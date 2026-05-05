@@ -614,14 +614,31 @@ function WorkspacePage() {
                   {rawInput.length.toLocaleString()} chars
                 </span>
               </div>
-              <textarea
-                value={rawInput}
-                onChange={(e) => setRawInput(e.target.value)}
-                placeholder={'Cole logs, JSON, código, schema SQL ou descreva uma lógica...'}
-                disabled={!canEdit}
-                className="scrollbar-thin flex-1 resize-none bg-transparent p-6 font-mono text-[12.5px] leading-relaxed text-foreground/80 outline-none placeholder:text-muted-foreground/50 disabled:opacity-60"
-                spellCheck={false}
-              />
+              <div
+                onDragOver={(e) => { if (canEdit) { e.preventDefault(); setDragOver(true); } }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={async (e) => {
+                  e.preventDefault();
+                  setDragOver(false);
+                  if (!canEdit) return;
+                  await handleFileDrop(e.dataTransfer.files);
+                }}
+                className={`relative flex flex-1 flex-col ${dragOver ? "ring-2 ring-inset ring-primary/40" : ""}`}
+              >
+                <textarea
+                  value={rawInput}
+                  onChange={(e) => setRawInput(e.target.value)}
+                  placeholder={'Cole logs, JSON, código, schema SQL — ou arraste arquivos (.sql .json .log .md .txt) aqui.'}
+                  disabled={!canEdit}
+                  className="scrollbar-thin flex-1 resize-none bg-transparent p-6 font-mono text-[12.5px] leading-relaxed text-foreground/80 outline-none placeholder:text-muted-foreground/50 disabled:opacity-60"
+                  spellCheck={false}
+                />
+                {dragOver && (
+                  <div className="pointer-events-none absolute inset-4 flex items-center justify-center rounded-lg border-2 border-dashed border-primary/60 bg-primary/5">
+                    <span className="font-mono text-xs uppercase tracking-widest text-primary">Solte para anexar</span>
+                  </div>
+                )}
+              </div>
               <div className="border-t border-glass-border bg-black/20 p-3">
                 <Button
                   onClick={() => synthesize()}
