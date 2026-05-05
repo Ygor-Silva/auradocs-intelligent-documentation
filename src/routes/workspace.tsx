@@ -525,6 +525,7 @@ function WorkspacePage() {
                     <option value="__new__" className="bg-popover">+ Nova pasta…</option>
                   </select>
                 </div>
+                <SaveStatus dirty={dirtyRef.current} savedAt={savedAt} saving={saving} />
               </>
             ) : (
               <span className="text-sm text-muted-foreground">Selecione ou crie um documento</span>
