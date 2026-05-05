@@ -22,7 +22,7 @@ interface Props {
 
 const ALL_TAG = "__all__";
 
-export function WorkspaceSidebar({ docs, activeId, onSelect, onCreate, onMove, onCreateFolder }: Props) {
+export function WorkspaceSidebar({ docs, activeId, onSelect, onCreate, onMove, onCreateFolder, extraFolders = [] }: Props) {
   const [openFolders, setOpenFolders] = useState<Record<string, boolean>>({});
   const [showFavorites, setShowFavorites] = useState(false);
   const [activeTag, setActiveTag] = useState<string>(ALL_TAG);
