@@ -397,6 +397,8 @@ function WorkspacePage() {
           onSelect={(id) => { const d = docs.find((x) => x.id === id); if (d) selectDoc(d); }}
           onCreate={createDoc}
           onMove={moveToFolder}
+          onCreateFolder={createFolder}
+          extraFolders={extraFolders}
         />
 
         <div className="border-t border-glass-border p-4">
