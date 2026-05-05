@@ -536,6 +536,19 @@ function WorkspacePage() {
             <PresenceAvatars peers={peers} meId={user.id} />
 
             <button
+              onClick={() => setSearchOpen(true)}
+              title="Buscar (⌘K)"
+              className="flex items-center gap-2 rounded-md border border-glass-border bg-background/40 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
+            >
+              <Search className="size-3.5" />
+              <span>Buscar</span>
+              <span className="flex items-center gap-1">
+                <kbd className="rounded border border-glass-border bg-background/60 px-1.5 py-0.5 font-mono text-[10px]">⌘</kbd>
+                <kbd className="rounded border border-glass-border bg-background/60 px-1.5 py-0.5 font-mono text-[10px]">K</kbd>
+              </span>
+            </button>
+
+            <button
               onClick={() => setPaletteOpen(true)}
               className="flex items-center gap-3 rounded-md border border-glass-border bg-background/40 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
             >
