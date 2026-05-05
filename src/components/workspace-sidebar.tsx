@@ -17,6 +17,7 @@ interface Props {
   onCreate: () => void;
   onMove: (docId: string, folder: string) => void;
   onCreateFolder?: (folder: string) => void;
+  extraFolders?: string[];
 }
 
 const ALL_TAG = "__all__";
