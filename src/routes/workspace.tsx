@@ -435,12 +435,29 @@ function WorkspacePage() {
                 />
                 <div className="flex items-center gap-1 text-xs text-muted-foreground">
                   <FolderInput className="size-3" />
-                  <input
+                  <select
                     value={folder}
-                    onChange={(e) => setFolder(e.target.value)}
-                    onBlur={() => persist({ folder_name: folder || "Geral" })}
-                    className="w-24 bg-transparent outline-none focus:text-foreground"
-                  />
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === "__new__") {
+                        const name = window.prompt("Nome da nova pasta:")?.trim();
+                        if (name) {
+                          createFolder(name);
+                          setFolder(name);
+                          void persist({ folder_name: name });
+                        }
+                        return;
+                      }
+                      setFolder(val);
+                      void persist({ folder_name: val });
+                    }}
+                    className="cursor-pointer rounded border border-transparent bg-transparent px-1 py-0.5 outline-none transition hover:border-glass-border focus:border-glass-border focus:text-foreground"
+                  >
+                    {Array.from(new Set(["Geral", folder, ...extraFolders, ...docs.map((d) => d.folder_name)].filter(Boolean))).sort().map((f) => (
+                      <option key={f} value={f} className="bg-popover">{f}</option>
+                    ))}
+                    <option value="__new__" className="bg-popover">+ Nova pasta…</option>
+                  </select>
                 </div>
               </>
             ) : (
