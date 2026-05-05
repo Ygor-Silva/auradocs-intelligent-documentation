@@ -480,6 +480,39 @@ function WorkspacePage() {
               </span>
             </button>
 
+            {/* User profile chip */}
+            <div className="group relative">
+              <button
+                title={user.email ?? "Conta"}
+                className="flex items-center gap-2 rounded-full border border-glass-border bg-background/40 py-1 pl-1 pr-3 transition hover:border-primary/40"
+              >
+                <span className="flex size-6 items-center justify-center rounded-full bg-aura-gradient text-[11px] font-semibold text-primary-foreground">
+                  {(user.email ?? "?")[0].toUpperCase()}
+                </span>
+                <span className="max-w-[140px] truncate text-xs text-muted-foreground group-hover:text-foreground">
+                  {user.user_metadata?.display_name ?? user.email?.split("@")[0]}
+                </span>
+              </button>
+              <div className="invisible absolute right-0 top-full z-50 mt-2 w-56 origin-top-right rounded-lg border border-glass-border bg-popover p-2 opacity-0 shadow-aura backdrop-blur-xl transition group-hover:visible group-hover:opacity-100">
+                <div className="border-b border-glass-border px-2 py-2">
+                  <div className="truncate text-xs font-medium text-foreground">{user.email}</div>
+                  {myRole && <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{myRole}</div>}
+                </div>
+                <button
+                  onClick={() => setMembersOpen(true)}
+                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-muted-foreground transition hover:bg-white/5 hover:text-foreground"
+                >
+                  <Users className="size-3.5" /> Membros do workspace
+                </button>
+                <button
+                  onClick={signOut}
+                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-muted-foreground transition hover:bg-white/5 hover:text-destructive"
+                >
+                  <LogOut className="size-3.5" /> Sair
+                </button>
+              </div>
+            </div>
+
             {activeId && (
               <>
                 <Button size="sm" variant="ghost" onClick={() => setDiffOpen(true)} title="Histórico visual">
