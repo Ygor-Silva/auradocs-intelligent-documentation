@@ -57,6 +57,11 @@ function WorkspacePage() {
   const [diffOpen, setDiffOpen] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [extraFolders, setExtraFolders] = useState<string[]>([]);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [savedAt, setSavedAt] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+  const dirtyRef = useRef(false);
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const docViewRef = useRef<HTMLDivElement | null>(null);
 
