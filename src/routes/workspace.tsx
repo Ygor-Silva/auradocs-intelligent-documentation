@@ -19,9 +19,14 @@ import { GlobalSearch } from "@/components/global-search";
 import { exportToPDF, exportToXLSX } from "@/lib/export-doc";
 import { toast } from "sonner";
 import {
-  Plus, Sparkles, Loader2, LogOut, Save, Trash2, Wand2,
+  Plus, Sparkles, Loader2, LogOut, Trash2, Wand2,
   Star, Users, Share2, History, Download, FileText, FolderInput, Search, Check,
+  MoreHorizontal, FileDown, FileSpreadsheet, ChevronDown,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/workspace")({
   component: WorkspacePage,
@@ -538,11 +543,16 @@ function WorkspacePage() {
 
       {/* Main */}
       <main className="relative z-10 flex min-w-0 flex-1 flex-col">
-        <header className="flex h-16 items-center justify-between gap-3 border-b border-glass-border bg-glass px-6 backdrop-blur-md">
+        <header className="flex h-16 items-center gap-3 border-b border-glass-border bg-glass px-6 backdrop-blur-md">
+          {/* LEFT: doc identity */}
           <div className="flex min-w-0 flex-1 items-center gap-2">
             {activeId ? (
               <>
-                <button onClick={toggleFavorite} title="Favoritar" className="text-muted-foreground transition hover:text-primary">
+                <button
+                  onClick={toggleFavorite}
+                  title={isFavorite ? "Desfavoritar" : "Favoritar"}
+                  className="shrink-0 text-muted-foreground transition hover:text-primary"
+                >
                   <Star className={`size-4 ${isFavorite ? "fill-primary text-primary" : ""}`} />
                 </button>
                 <Input
@@ -550,9 +560,10 @@ function WorkspacePage() {
                   onChange={(e) => setTitle(e.target.value)}
                   onBlur={saveDoc}
                   placeholder="Título do documento"
-                  className="h-9 max-w-md border-transparent bg-transparent text-base font-medium shadow-none focus-visible:border-glass-border focus-visible:bg-background/30"
+                  className="h-9 min-w-0 max-w-md flex-1 border-transparent bg-transparent text-base font-medium shadow-none focus-visible:border-glass-border focus-visible:bg-background/30"
                 />
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                <span className="hidden h-5 w-px bg-glass-border md:block" />
+                <div className="hidden items-center gap-1 text-xs text-muted-foreground md:flex">
                   <FolderInput className="size-3" />
                   <select
                     value={folder}
@@ -585,98 +596,122 @@ function WorkspacePage() {
             )}
           </div>
 
-          <div className="flex items-center gap-2">
+          {/* RIGHT: actions */}
+          <div className="flex shrink-0 items-center gap-2">
             <PresenceAvatars peers={peers} meId={user.id} />
 
+            {/* Search */}
             <button
               onClick={() => setSearchOpen(true)}
               title="Buscar (⌘K)"
               className="flex items-center gap-2 rounded-md border border-glass-border bg-background/40 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
             >
               <Search className="size-3.5" />
-              <span>Buscar</span>
-              <span className="flex items-center gap-1">
+              <span className="hidden lg:inline">Buscar</span>
+              <span className="hidden items-center gap-1 lg:flex">
                 <kbd className="rounded border border-glass-border bg-background/60 px-1.5 py-0.5 font-mono text-[10px]">⌘</kbd>
                 <kbd className="rounded border border-glass-border bg-background/60 px-1.5 py-0.5 font-mono text-[10px]">K</kbd>
               </span>
             </button>
 
+            {/* Aura primary CTA */}
             <button
               onClick={() => setPaletteOpen(true)}
-              className="flex items-center gap-3 rounded-md border border-glass-border bg-background/40 px-3 py-1.5 text-xs text-muted-foreground transition hover:border-primary/40 hover:text-foreground"
+              className="flex items-center gap-2 rounded-md border border-primary/30 bg-aura-gradient/10 px-3 py-1.5 text-xs font-medium text-foreground transition hover:border-primary/60 hover:bg-aura-gradient/20"
             >
-              <Sparkles className="size-3.5" />
+              <Sparkles className="size-3.5 text-primary" />
               <span>Pedir ao Aura</span>
-              <span className="flex items-center gap-1">
-                <kbd className="rounded border border-glass-border bg-background/60 px-1.5 py-0.5 font-mono text-[10px]">Alt</kbd>
-                <kbd className="rounded border border-glass-border bg-background/60 px-1.5 py-0.5 font-mono text-[10px]">A</kbd>
-              </span>
+              <kbd className="hidden rounded border border-glass-border bg-background/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground lg:inline">⌥A</kbd>
             </button>
 
-            {/* User profile chip */}
-            <div className="group relative">
-              <button
-                title={user.email ?? "Conta"}
-                className="flex items-center gap-2 rounded-full border border-glass-border bg-background/40 py-1 pl-1 pr-3 transition hover:border-primary/40"
-              >
-                <span className="flex size-6 items-center justify-center rounded-full bg-aura-gradient text-[11px] font-semibold text-primary-foreground">
-                  {(user.email ?? "?")[0].toUpperCase()}
-                </span>
-                <span className="max-w-[140px] truncate text-xs text-muted-foreground group-hover:text-foreground">
-                  {user.user_metadata?.display_name ?? user.email?.split("@")[0]}
-                </span>
-              </button>
-              <div className="invisible absolute right-0 top-full z-50 mt-2 w-56 origin-top-right rounded-lg border border-glass-border bg-popover p-2 opacity-0 shadow-aura backdrop-blur-xl transition group-hover:visible group-hover:opacity-100">
+            {activeId && (
+              <>
+                <span className="hidden h-5 w-px bg-glass-border md:block" />
+
+                {/* Export dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="ghost" disabled={!content || exporting} className="gap-1.5">
+                      {exporting ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
+                      <span className="text-xs">Exportar</span>
+                      <ChevronDown className="size-3 opacity-60" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 border-glass-border bg-popover/95 backdrop-blur-xl">
+                    <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                      Formatos
+                    </DropdownMenuLabel>
+                    <DropdownMenuItem onClick={handleExportPDF} className="gap-2 text-xs">
+                      <FileDown className="size-3.5 text-primary" /> PDF (estilizado)
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={handleExportXLSX} className="gap-2 text-xs">
+                      <FileSpreadsheet className="size-3.5 text-emerald-400" /> Excel (XLSX)
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Overflow menu */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" variant="ghost" title="Mais ações">
+                      <MoreHorizontal className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-52 border-glass-border bg-popover/95 backdrop-blur-xl">
+                    <DropdownMenuItem onClick={() => setShareOpen(true)} className="gap-2 text-xs">
+                      <Share2 className="size-3.5" /> Compartilhar link
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setDiffOpen(true)} className="gap-2 text-xs">
+                      <History className="size-3.5" /> Histórico de versões
+                    </DropdownMenuItem>
+                    {canEdit && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={deleteDoc}
+                          className="gap-2 text-xs text-destructive focus:text-destructive"
+                        >
+                          <Trash2 className="size-3.5" /> Excluir documento
+                        </DropdownMenuItem>
+                      </>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </>
+            )}
+
+            <span className="hidden h-5 w-px bg-glass-border md:block" />
+
+            {/* User profile */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  title={user.email ?? "Conta"}
+                  className="flex items-center gap-2 rounded-full border border-glass-border bg-background/40 py-1 pl-1 pr-2.5 transition hover:border-primary/40"
+                >
+                  <span className="flex size-6 items-center justify-center rounded-full bg-aura-gradient text-[11px] font-semibold text-primary-foreground">
+                    {(user.email ?? "?")[0].toUpperCase()}
+                  </span>
+                  <span className="hidden max-w-[120px] truncate text-xs text-muted-foreground md:inline">
+                    {user.user_metadata?.display_name ?? user.email?.split("@")[0]}
+                  </span>
+                  <ChevronDown className="hidden size-3 opacity-50 md:inline" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56 border-glass-border bg-popover/95 backdrop-blur-xl">
                 <div className="border-b border-glass-border px-2 py-2">
                   <div className="truncate text-xs font-medium text-foreground">{user.email}</div>
                   {myRole && <div className="text-[10px] uppercase tracking-widest text-muted-foreground">{myRole}</div>}
                 </div>
-                <button
-                  onClick={() => setMembersOpen(true)}
-                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-muted-foreground transition hover:bg-white/5 hover:text-foreground"
-                >
+                <DropdownMenuItem onClick={() => setMembersOpen(true)} className="gap-2 text-xs">
                   <Users className="size-3.5" /> Membros do workspace
-                </button>
-                <button
-                  onClick={signOut}
-                  className="flex w-full items-center gap-2 rounded px-2 py-1.5 text-left text-xs text-muted-foreground transition hover:bg-white/5 hover:text-destructive"
-                >
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={signOut} className="gap-2 text-xs text-destructive focus:text-destructive">
                   <LogOut className="size-3.5" /> Sair
-                </button>
-              </div>
-            </div>
-
-            {activeId && (
-              <>
-                <Button size="sm" variant="ghost" onClick={() => setDiffOpen(true)} title="Histórico visual">
-                  <History className="size-3.5" />
-                </Button>
-                <Button size="sm" variant="ghost" onClick={() => setShareOpen(true)} title="Compartilhar">
-                  <Share2 className="size-3.5" />
-                </Button>
-                <div className="flex items-center rounded-md border border-glass-border bg-background/40">
-                  <Button size="sm" variant="ghost" onClick={handleExportPDF} disabled={exporting || !content} title="Exportar PDF" className="rounded-r-none">
-                    {exporting ? <Loader2 className="size-3.5 animate-spin" /> : <Download className="size-3.5" />}
-                    <span className="ml-1 text-[11px]">PDF</span>
-                  </Button>
-                  <span className="h-4 w-px bg-glass-border" />
-                  <Button size="sm" variant="ghost" onClick={handleExportXLSX} disabled={!content} title="Exportar Excel" className="rounded-l-none">
-                    <FileText className="size-3.5" />
-                    <span className="ml-1 text-[11px]">XLSX</span>
-                  </Button>
-                </div>
-                {canEdit && (
-                  <Button size="sm" variant="ghost" onClick={saveDoc} disabled={saving}>
-                    {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
-                  </Button>
-                )}
-                {canEdit && (
-                  <Button size="sm" variant="ghost" onClick={deleteDoc} className="text-muted-foreground hover:text-destructive">
-                    <Trash2 className="size-3.5" />
-                  </Button>
-                )}
-              </>
-            )}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 

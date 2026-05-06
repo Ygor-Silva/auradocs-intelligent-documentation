@@ -27,10 +27,50 @@ Given a Markdown document, return ONLY a concise, impactful title (max 6 words).
 
 const AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 
+// Simple in-memory sliding-window rate limit (per isolate).
+// 10 requests / 60s per caller (user id when available, else IP).
+const RL_WINDOW_MS = 60_000;
+const RL_MAX = 10;
+const rlMap = new Map<string, number[]>();
+function rateLimit(key: string): { ok: boolean; retryAfter: number } {
+  const now = Date.now();
+  const arr = (rlMap.get(key) ?? []).filter((t) => now - t < RL_WINDOW_MS);
+  if (arr.length >= RL_MAX) {
+    return { ok: false, retryAfter: Math.ceil((RL_WINDOW_MS - (now - arr[0])) / 1000) };
+  }
+  arr.push(now);
+  rlMap.set(key, arr);
+  // Opportunistic GC
+  if (rlMap.size > 5000) {
+    for (const [k, v] of rlMap) if (v.every((t) => now - t > RL_WINDOW_MS)) rlMap.delete(k);
+  }
+  return { ok: true, retryAfter: 0 };
+}
+function callerKey(req: Request): string {
+  const auth = req.headers.get("authorization") ?? "";
+  const token = auth.replace(/^Bearer\s+/i, "");
+  if (token.split(".").length === 3) {
+    try {
+      const payload = JSON.parse(atob(token.split(".")[1].replace(/-/g, "+").replace(/_/g, "/")));
+      if (payload.sub) return `u:${payload.sub}`;
+    } catch { /* ignore */ }
+  }
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim()
+    || req.headers.get("cf-connecting-ip") || "anon";
+  return `ip:${ip}`;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    const rl = rateLimit(callerKey(req));
+    if (!rl.ok) {
+      return new Response(JSON.stringify({ error: `Rate limit. Tente novamente em ${rl.retryAfter}s.` }), {
+        status: 429,
+        headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": String(rl.retryAfter) },
+      });
+    }
     const { rawInput, intent, model } = await req.json();
 
     if (!rawInput || typeof rawInput !== "string") {
