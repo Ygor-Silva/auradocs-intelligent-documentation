@@ -219,16 +219,66 @@ function WorkspacePage() {
     } catch { setExtraFolders([]); }
   }, [workspaceId]);
 
+  function persistExtraFolders(next: string[]) {
+    setExtraFolders(next);
+    if (!workspaceId) return;
+    try { localStorage.setItem(`auradocs:folders:${workspaceId}`, JSON.stringify(next)); } catch { /* noop */ }
+  }
+
   function createFolder(name: string) {
     const clean = name.trim();
     if (!clean || !workspaceId) return;
-    setExtraFolders((prev) => {
-      if (prev.includes(clean)) return prev;
-      const next = [...prev, clean];
-      try { localStorage.setItem(`auradocs:folders:${workspaceId}`, JSON.stringify(next)); } catch { /* noop */ }
-      return next;
-    });
+    if (extraFolders.includes(clean)) return;
+    persistExtraFolders([...extraFolders, clean]);
     toast.success(`Pasta "${clean}" criada`);
+  }
+
+  async function renameFolder(oldName: string, newName: string) {
+    const clean = newName.trim();
+    if (!clean || clean === oldName || !workspaceId) return;
+    if (oldName === "Geral") { toast.error("A pasta Geral não pode ser renomeada"); return; }
+    // Update DB rows
+    const { error } = await supabase
+      .from("documents")
+      .update({ folder_name: clean })
+      .eq("workspace_id", workspaceId)
+      .eq("folder_name", oldName);
+    if (error) { toast.error("Falha ao renomear"); return; }
+    setDocs((ds) => ds.map((x) => (x.folder_name === oldName ? { ...x, folder_name: clean } : x)));
+    if (folder === oldName) setFolder(clean);
+    const next = extraFolders.filter((f) => f !== oldName);
+    if (!next.includes(clean)) next.push(clean);
+    persistExtraFolders(next);
+    toast.success(`Pasta renomeada para "${clean}"`);
+  }
+
+  async function deleteFolder(name: string) {
+    if (!workspaceId || name === "Geral") return;
+    const inFolder = docs.filter((d) => d.folder_name === name);
+    if (inFolder.length > 0) {
+      const { error } = await supabase
+        .from("documents")
+        .update({ folder_name: "Geral" })
+        .eq("workspace_id", workspaceId)
+        .eq("folder_name", name);
+      if (error) { toast.error("Falha ao excluir pasta"); return; }
+      setDocs((ds) => ds.map((x) => (x.folder_name === name ? { ...x, folder_name: "Geral" } : x)));
+      if (folder === name) setFolder("Geral");
+    }
+    persistExtraFolders(extraFolders.filter((f) => f !== name));
+    toast.success(`Pasta "${name}" excluída`);
+  }
+
+  async function bulkMove(docIds: string[], folderName: string) {
+    if (docIds.length === 0) return;
+    const { error } = await supabase
+      .from("documents")
+      .update({ folder_name: folderName })
+      .in("id", docIds);
+    if (error) { toast.error("Falha ao mover documentos"); return; }
+    setDocs((ds) => ds.map((x) => (docIds.includes(x.id) ? { ...x, folder_name: folderName } : x)));
+    if (activeId && docIds.includes(activeId)) setFolder(folderName);
+    toast.success(`${docIds.length} documento${docIds.length > 1 ? "s movidos" : " movido"} para "${folderName}"`);
   }
 
   async function toggleFavorite() {
