@@ -19,9 +19,14 @@ import { GlobalSearch } from "@/components/global-search";
 import { exportToPDF, exportToXLSX } from "@/lib/export-doc";
 import { toast } from "sonner";
 import {
-  Plus, Sparkles, Loader2, LogOut, Save, Trash2, Wand2,
+  Plus, Sparkles, Loader2, LogOut, Trash2, Wand2,
   Star, Users, Share2, History, Download, FileText, FolderInput, Search, Check,
+  MoreHorizontal, FileDown, FileSpreadsheet, ChevronDown,
 } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/workspace")({
   component: WorkspacePage,
