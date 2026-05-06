@@ -514,6 +514,9 @@ function WorkspacePage() {
           onCreate={createDoc}
           onMove={moveToFolder}
           onCreateFolder={createFolder}
+          onRenameFolder={renameFolder}
+          onDeleteFolder={(name) => deleteFolder(name)}
+          onBulkMove={bulkMove}
           extraFolders={extraFolders}
         />
 
